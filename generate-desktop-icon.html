@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop App Icon Generator - Image Converter Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+        }
+        
+        .preview-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        canvas {
+            border: 2px solid #334155;
+            border-radius: 12px;
+            background: #0f172a;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .control-group {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+        
+        .control-group input[type="color"],
+        .control-group input[type="range"],
+        .control-group input[type="number"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .control-group input[type="number"] {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f1f5f9;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .size-info {
+            text-align: center;
+            color: #94a3b8;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Desktop App Icon Generator</h1>
+        <p class="subtitle">Generate professional icons for Image Converter Pro Desktop App</p>
+        
+        <div class="preview-section">
+            <canvas id="iconCanvas" width="512" height="512"></canvas>
+            <div class="size-info">512x512px (Will be resized for different formats)</div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Background Color</label>
+                <input type="color" id="bgColor" value="#8b5cf6">
+            </div>
+            <div class="control-group">
+                <label>Line Color</label>
+                <input type="color" id="lineColor" value="#ffffff">
+            </div>
+            <div class="control-group">
+                <label>Shape Color</label>
+                <input type="color" id="shapeColor" value="#e2e8f0">
+            </div>
+            <div class="control-group">
+                <label>Green Dot Color</label>
+                <input type="color" id="dotColor" value="#10b981">
+            </div>
+            <div class="control-group">
+                <label>Corner Radius</label>
+                <input type="range" id="cornerRadius" min="0" max="100" value="25">
+                <span id="cornerRadiusValue">25</span>%
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="generateIcon()">🔄 Regenerate Icon</button>
+            <button onclick="downloadIcon('png', 512)">📥 Download PNG (512x512)</button>
+            <button onclick="downloadIcon('png', 256)">📥 Download PNG (256x256)</button>
+            <button onclick="downloadIcon('png', 128)">📥 Download PNG (128x128)</button>
+            <button onclick="downloadIcon('png', 64)">📥 Download PNG (64x64)</button>
+            <button onclick="downloadIcon('png', 32)">📥 Download PNG (32x32)</button>
+            <button onclick="downloadIcon('png', 16)">📥 Download PNG (16x16)</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('iconCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function generateIcon() {
+            const bgColor = document.getElementById('bgColor').value;
+            const lineColor = document.getElementById('lineColor').value;
+            const shapeColor = document.getElementById('shapeColor').value;
+            const dotColor = document.getElementById('dotColor').value;
+            const cornerRadius = parseInt(document.getElementById('cornerRadius').value);
+            document.getElementById('cornerRadiusValue').textContent = cornerRadius;
+            
+            const size = 512;
+            const radius = (size * cornerRadius) / 100;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Draw rounded square background
+            ctx.fillStyle = bgColor;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw white line graph (trend line)
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.15, size * 0.35); // Start upper left
+            ctx.lineTo(size * 0.35, size * 0.45); // Dip down
+            ctx.lineTo(size * 0.65, size * 0.25); // Sharp rise
+            ctx.lineTo(size * 0.85, size * 0.15); // Continue up to upper right
+            ctx.stroke();
+            
+            // Draw light grey rectangle (rounded corners)
+            const rectX = size * 0.25;
+            const rectY = size * 0.55;
+            const rectW = size * 0.25;
+            const rectH = size * 0.15;
+            const rectRadius = 8;
+            
+            ctx.fillStyle = shapeColor;
+            ctx.beginPath();
+            ctx.moveTo(rectX + rectRadius, rectY);
+            ctx.lineTo(rectX + rectW - rectRadius, rectY);
+            ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + rectRadius);
+            ctx.lineTo(rectX + rectW, rectY + rectH - rectRadius);
+            ctx.quadraticCurveTo(rectX + rectW, rectY + rectH, rectX + rectW - rectRadius, rectY + rectH);
+            ctx.lineTo(rectX + rectRadius, rectY + rectH);
+            ctx.quadraticCurveTo(rectX, rectY + rectH, rectX, rectY + rectH - rectRadius);
+            ctx.lineTo(rectX, rectY + rectRadius);
+            ctx.quadraticCurveTo(rectX, rectY, rectX + rectRadius, rectY);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw light grey circle (overlapping rectangle)
+            const circleX = size * 0.55;
+            const circleY = size * 0.60;
+            const circleRadius = size * 0.08;
+            
+            ctx.fillStyle = shapeColor;
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw green dot in upper-left
+            const dotX = size * 0.20;
+            const dotY = size * 0.20;
+            const dotRadius = size * 0.06;
+            
+            ctx.fillStyle = dotColor;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add subtle shadow/glow effect
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 4;
+        }
+        
+        function downloadIcon(format, size) {
+            // Create a temporary canvas with the desired size
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Draw the icon scaled to the new size
+            tempCtx.drawImage(canvas, 0, 0, size, size);
+            
+            // Convert to blob and download
+            tempCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}x${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+        
+        // Generate icon on load
+        window.addEventListener('load', () => {
+            generateIcon();
+        });
+        
+        // Regenerate on control change
+        document.getElementById('bgColor').addEventListener('input', generateIcon);
+        document.getElementById('lineColor').addEventListener('input', generateIcon);
+        document.getElementById('shapeColor').addEventListener('input', generateIcon);
+        document.getElementById('dotColor').addEventListener('input', generateIcon);
+        document.getElementById('cornerRadius').addEventListener('input', generateIcon);
+    </script>
+</body>
+</html>
+
