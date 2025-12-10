@@ -1,0 +1,44 @@
+# Electron Builder Configuration
+# This file explicitly disables code signing to prevent winCodeSign download
+
+appId: com.imageconverterpro.desktop
+productName: Image Converter Pro
+directories:
+  output: dist
+
+files:
+  - "**/*"
+  - "!node_modules/**/*"
+  - "node_modules/electron/**/*"
+
+win:
+  target:
+    - portable
+  icon: assets/icon.ico
+  sign: null
+  signingHashAlgorithms: []
+  verifyUpdateCodeSignature: false
+  certificateFile: null
+  certificatePassword: null
+  signDlls: false
+  signAndEditExecutable: false
+
+mac:
+  target:
+    - dmg
+    - zip
+  icon: assets/icon.icns
+  category: public.app-category.utilities
+
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  icon: assets/icon.png
+  category: Graphics
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
