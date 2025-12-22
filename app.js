@@ -267,8 +267,8 @@ class ImageConverter {
 
         this.resizeMode.addEventListener('change', (e) => {
             const showDimensions = e.target.value === 'custom' || e.target.value === 'fit' || e.target.value === 'fill';
-            this.resizeDimensions.style.display = showDimensions ? 'block' : 'none';
-            this.resizeHeightGroup.style.display = showDimensions ? 'block' : 'none';
+            if (this.resizeDimensions) this.resizeDimensions.style.display = showDimensions ? 'block' : 'none';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = showDimensions ? 'block' : 'none';
         });
 
         this.outputFormat.addEventListener('change', (e) => {
@@ -455,37 +455,41 @@ class ImageConverter {
 
         // Show/hide custom size list section
         if (preset === 'custom-list') {
-            this.customSizeListSection.style.display = 'block';
-            this.presetInfo.innerHTML = `
-                <strong>Custom Size List Mode</strong><br>
-                <small>💡 Add any sizes you want, then generate them all at once</small>
-            `;
+            if (this.customSizeListSection) this.customSizeListSection.style.display = 'block';
+            if (this.presetInfo) {
+                this.presetInfo.innerHTML = `
+                    <strong>Custom Size List Mode</strong><br>
+                    <small>💡 Add any sizes you want, then generate them all at once</small>
+                `;
+            }
         } else {
-            this.customSizeListSection.style.display = 'none';
+            if (this.customSizeListSection) this.customSizeListSection.style.display = 'none';
         }
 
         // Update preset info
         const sizes = this.presetSizes[preset];
         if (preset === 'none') {
-            this.presetInfo.textContent = 'Using custom dimensions or no resize';
-            this.resizeWidth.disabled = false;
-            this.resizeHeight.disabled = false;
-            this.resizeDimensions.style.display = 'block';
-            this.resizeHeightGroup.style.display = 'block';
+            if (this.presetInfo) this.presetInfo.textContent = 'Using custom dimensions or no resize';
+            if (this.resizeWidth) this.resizeWidth.disabled = false;
+            if (this.resizeHeight) this.resizeHeight.disabled = false;
+            if (this.resizeDimensions) this.resizeDimensions.style.display = 'block';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = 'block';
         } else if (preset === 'custom-list') {
             // Already handled above
         } else {
             const sizesList = sizes.map(s => `${s.name || s.width + 'x' + s.height}`).join(', ');
             const count = sizes.length;
-            this.presetInfo.innerHTML = `
-                <strong>${count} sizes will be generated:</strong><br>
-                ${sizesList}<br>
-                <small>💡 Each uploaded image will generate ${count} resized versions automatically</small>
-            `;
-            this.resizeWidth.disabled = true;
-            this.resizeHeight.disabled = true;
-            this.resizeDimensions.style.display = 'none';
-            this.resizeHeightGroup.style.display = 'none';
+            if (this.presetInfo) {
+                this.presetInfo.innerHTML = `
+                    <strong>${count} sizes will be generated:</strong><br>
+                    ${sizesList}<br>
+                    <small>💡 Each uploaded image will generate ${count} resized versions automatically</small>
+                `;
+            }
+            if (this.resizeWidth) this.resizeWidth.disabled = true;
+            if (this.resizeHeight) this.resizeHeight.disabled = true;
+            if (this.resizeDimensions) this.resizeDimensions.style.display = 'none';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = 'none';
             // Auto-set resize mode to fit for presets
             if (this.resizeMode.value === 'none') {
                 this.resizeMode.value = 'fit';
@@ -784,7 +788,7 @@ class ImageConverter {
         const dpi = parseInt(this.dpi.value);
 
         // Get formats to generate
-        const formatsToGenerate = this.convertMultipleFormats.checked
+        let formatsToGenerate = this.convertMultipleFormats.checked
             ? Array.from(this.formatOptions).filter(opt => opt.checked).map(opt => opt.value)
             : [format];
 
@@ -794,7 +798,7 @@ class ImageConverter {
             // Use custom size list
             if (this.customSizesList.length === 0) {
                 alert('Please add some custom sizes to your list first');
-                this.convertBtn.disabled = false;
+                if (this.convertBtn) this.convertBtn.disabled = false;
                 return;
             }
             sizesToGenerate = this.customSizesList.map((size, idx) => ({
@@ -850,7 +854,7 @@ class ImageConverter {
             
             // Create progress item
             const progressItem = this.createProgressItem(imageData.name, i, sizesToGenerate.length);
-            this.progressContainer.appendChild(progressItem);
+            if (this.progressContainer) this.progressContainer.appendChild(progressItem);
 
             // Generate all sizes and formats for this image
             for (const size of sizesToGenerate) {
@@ -933,7 +937,7 @@ class ImageConverter {
             }
         }
 
-        this.convertBtn.disabled = false;
+        if (this.convertBtn) this.convertBtn.disabled = false;
         this.addToHistory();
         this.showResults();
     }
@@ -1285,9 +1289,9 @@ class ImageConverter {
     }
 
     showResults() {
-        this.progressSection.style.display = 'none';
-        this.resultsSection.style.display = 'block';
-        this.resultsContainer.innerHTML = '';
+        if (this.progressSection) this.progressSection.style.display = 'none';
+        if (this.resultsSection) this.resultsSection.style.display = 'block';
+        if (this.resultsContainer) this.resultsContainer.innerHTML = '';
 
         // Group by original image if using presets
         const groupedResults = {};

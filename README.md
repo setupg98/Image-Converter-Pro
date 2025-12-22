@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🖼️ Image Converter Pro
 
 A powerful, feature-rich image conversion tool available in three formats:
@@ -133,3 +134,7 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 ---
 
 **Made with ❤️ for image conversion needs**
+=======
+# Image-Converter
+Cross-platform image converter and resizer for Web, Windows, macOS, Linux, Chrome Extension, and Android. Supports PNG, JPG, WebP, AVIF, SVG, multi-size output, logo/icon packs, offline mode, batch processing, and more.
+>>>>>>> c795147dc01661ee411d2e1b1ab1063a731aec94

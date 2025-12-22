@@ -286,8 +286,8 @@ class ImageConverter {
 
         this.resizeMode.addEventListener('change', (e) => {
             const showDimensions = e.target.value === 'custom' || e.target.value === 'fit' || e.target.value === 'fill';
-            this.resizeDimensions.style.display = showDimensions ? 'block' : 'none';
-            this.resizeHeightGroup.style.display = showDimensions ? 'block' : 'none';
+            if (this.resizeDimensions) this.resizeDimensions.style.display = showDimensions ? 'block' : 'none';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = showDimensions ? 'block' : 'none';
         });
 
         this.outputFormat.addEventListener('change', (e) => {
@@ -326,7 +326,7 @@ class ImageConverter {
         this.clearBtn.addEventListener('click', () => this.clearAll());
         this.downloadAllBtn.addEventListener('click', () => this.downloadAll());
         
-        // Quick Actions
+        // Quick Actions - Use arrow functions to preserve 'this' context
         const quickCrop = document.getElementById('quickCrop');
         const quickRotate = document.getElementById('quickRotate');
         const quickFlipH = document.getElementById('quickFlipH');
@@ -344,6 +344,17 @@ class ImageConverter {
         if (quickWatermark) quickWatermark.addEventListener('click', () => this.openWatermarkModal());
         if (quickMetadata) quickMetadata.addEventListener('click', () => this.openMetadataModal());
         if (quickRename) quickRename.addEventListener('click', () => this.openRenameModal());
+        
+        // Add event listeners for crop controls
+        const cropX = document.getElementById('cropX');
+        const cropY = document.getElementById('cropY');
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        
+        if (cropX) cropX.addEventListener('input', () => this.updateCropPreview());
+        if (cropY) cropY.addEventListener('input', () => this.updateCropPreview());
+        if (cropWidth) cropWidth.addEventListener('input', () => this.updateCropPreview());
+        if (cropHeight) cropHeight.addEventListener('input', () => this.updateCropPreview());
         
         // Modal close buttons
         const cancelCropBtn = document.getElementById('cancelCropBtn');
@@ -648,37 +659,45 @@ class ImageConverter {
 
         // Show/hide custom size list section
         if (preset === 'custom-list') {
-            this.customSizeListSection.style.display = 'block';
-            this.presetInfo.innerHTML = `
-                <strong>Custom Size List Mode</strong><br>
-                <small>💡 Add any sizes you want, then generate them all at once</small>
-            `;
+            if (this.customSizeListSection) {
+                this.customSizeListSection.style.display = 'block';
+            }
+            if (this.presetInfo) {
+                this.presetInfo.innerHTML = `
+                    <strong>Custom Size List Mode</strong><br>
+                    <small>💡 Add any sizes you want, then generate them all at once</small>
+                `;
+            }
         } else {
-            this.customSizeListSection.style.display = 'none';
+            if (this.customSizeListSection) {
+                this.customSizeListSection.style.display = 'none';
+            }
         }
 
         // Update preset info
         const sizes = this.presetSizes[preset];
         if (preset === 'none') {
-            this.presetInfo.textContent = 'Using custom dimensions or no resize';
-            this.resizeWidth.disabled = false;
-            this.resizeHeight.disabled = false;
-            this.resizeDimensions.style.display = 'block';
-            this.resizeHeightGroup.style.display = 'block';
+            if (this.presetInfo) this.presetInfo.textContent = 'Using custom dimensions or no resize';
+            if (this.resizeWidth) this.resizeWidth.disabled = false;
+            if (this.resizeHeight) this.resizeHeight.disabled = false;
+            if (this.resizeDimensions) this.resizeDimensions.style.display = 'block';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = 'block';
         } else if (preset === 'custom-list') {
             // Already handled above
         } else {
             const sizesList = sizes.map(s => `${s.name || s.width + 'x' + s.height}`).join(', ');
             const count = sizes.length;
-            this.presetInfo.innerHTML = `
-                <strong>${count} sizes will be generated:</strong><br>
-                ${sizesList}<br>
-                <small>💡 Each uploaded image will generate ${count} resized versions automatically</small>
-            `;
-            this.resizeWidth.disabled = true;
-            this.resizeHeight.disabled = true;
-            this.resizeDimensions.style.display = 'none';
-            this.resizeHeightGroup.style.display = 'none';
+            if (this.presetInfo) {
+                this.presetInfo.innerHTML = `
+                    <strong>${count} sizes will be generated:</strong><br>
+                    ${sizesList}<br>
+                    <small>💡 Each uploaded image will generate ${count} resized versions automatically</small>
+                `;
+            }
+            if (this.resizeWidth) this.resizeWidth.disabled = true;
+            if (this.resizeHeight) this.resizeHeight.disabled = true;
+            if (this.resizeDimensions) this.resizeDimensions.style.display = 'none';
+            if (this.resizeHeightGroup) this.resizeHeightGroup.style.display = 'none';
             // Auto-set resize mode to fit for presets
             if (this.resizeMode.value === 'none') {
                 this.resizeMode.value = 'fit';
@@ -687,6 +706,11 @@ class ImageConverter {
     }
 
     addCustomSize() {
+        if (!this.newSizeWidth || !this.newSizeHeight || !this.newSizeKeepAspect) {
+            console.error('Custom size input elements not found');
+            return;
+        }
+        
         const width = parseInt(this.newSizeWidth.value);
         const height = parseInt(this.newSizeHeight.value);
         const keepAspect = this.newSizeKeepAspect.checked;
@@ -768,6 +792,11 @@ class ImageConverter {
     }
 
     updateCustomSizesListUI() {
+        if (!this.customSizesListContainer) {
+            console.error('Custom sizes list container not found');
+            return;
+        }
+        
         if (this.customSizesList.length === 0) {
             this.customSizesListContainer.innerHTML = '<p class="empty-message">No custom sizes added yet. Click "+ Add Size" to start building your list.</p>';
             return;
@@ -986,11 +1015,15 @@ class ImageConverter {
             this.imagesGrid.style.display = 'block';
             this.updateImageGrid();
             this.updateBulkActionsUI();
+            this.updateQuickActions();
         } else {
             this.settingsPanel.style.display = 'none';
             this.imagesGrid.style.display = 'none';
             this.selectedImages.clear();
             this.updateBulkActionsUI();
+            if (this.quickActions) {
+                this.quickActions.style.display = 'none';
+            }
         }
     }
 
@@ -1321,10 +1354,10 @@ class ImageConverter {
         }
 
         this.convertedImages = [];
-        this.resultsSection.style.display = 'none';
-        this.progressSection.style.display = 'block';
-        this.progressContainer.innerHTML = '';
-        this.convertBtn.disabled = true;
+        if (this.resultsSection) this.resultsSection.style.display = 'none';
+        if (this.progressSection) this.progressSection.style.display = 'block';
+        if (this.progressContainer) this.progressContainer.innerHTML = '';
+        if (this.convertBtn) this.convertBtn.disabled = true;
 
         const format = this.outputFormat.value;
         const quality = this.quality.value / 100;
@@ -1337,7 +1370,7 @@ class ImageConverter {
         const dpi = parseInt(this.dpi.value);
 
         // Get formats to generate
-        const formatsToGenerate = this.convertMultipleFormats.checked
+        let formatsToGenerate = this.convertMultipleFormats.checked
             ? Array.from(this.formatOptions).filter(opt => opt.checked).map(opt => opt.value)
             : [format];
 
@@ -1347,7 +1380,7 @@ class ImageConverter {
             // Use custom size list
             if (this.customSizesList.length === 0) {
                 alert('Please add some custom sizes to your list first');
-                this.convertBtn.disabled = false;
+                if (this.convertBtn) this.convertBtn.disabled = false;
                 return;
             }
             sizesToGenerate = this.customSizesList.map((size, idx) => ({
@@ -1403,7 +1436,7 @@ class ImageConverter {
             
             // Create progress item
             const progressItem = this.createProgressItem(imageData.name, i, sizesToGenerate.length);
-            this.progressContainer.appendChild(progressItem);
+            if (this.progressContainer) this.progressContainer.appendChild(progressItem);
 
             // Generate all sizes and formats for this image
             for (const size of sizesToGenerate) {
@@ -1486,7 +1519,7 @@ class ImageConverter {
             }
         }
 
-        this.convertBtn.disabled = false;
+        if (this.convertBtn) this.convertBtn.disabled = false;
         this.addToHistory();
         this.showResults();
     }
@@ -1838,9 +1871,9 @@ class ImageConverter {
     }
 
     showResults() {
-        this.progressSection.style.display = 'none';
-        this.resultsSection.style.display = 'block';
-        this.resultsContainer.innerHTML = '';
+        if (this.progressSection) this.progressSection.style.display = 'none';
+        if (this.resultsSection) this.resultsSection.style.display = 'block';
+        if (this.resultsContainer) this.resultsContainer.innerHTML = '';
 
         // Group by original image if using presets
         const groupedResults = {};
@@ -2075,10 +2108,24 @@ class ImageConverter {
             return;
         }
 
-        // Create ZIP
-        if (typeof JSZip === 'undefined') {
+        // Create ZIP - Wait for JSZip to load if needed
+        let JSZipLoaded = typeof JSZip !== 'undefined';
+        if (!JSZipLoaded) {
+            // Wait a bit for script to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+            JSZipLoaded = typeof JSZip !== 'undefined';
+        }
+        
+        if (!JSZipLoaded) {
             const message = 'ZIP library not loaded. Please refresh the page.';
-            if (window.electronAPI) {
+            if (this.isChromeExtension && chrome.notifications) {
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: chrome.runtime.getURL('icons/icon48.png'),
+                    title: 'Error',
+                    message: message
+                });
+            } else if (window.electronAPI) {
                 await window.electronAPI.showMessageBox({ type: 'error', message });
             } else {
                 alert(message);
@@ -2210,15 +2257,16 @@ class ImageConverter {
         this.customSizesList = [];
         this.selectedImages.clear();
         this.settingsPanel.style.display = 'none';
-        this.imagesGrid.style.display = 'none';
-        this.progressSection.style.display = 'none';
-        this.resultsSection.style.display = 'none';
-        this.customSizeListSection.style.display = 'none';
+        if (this.imagesGrid) this.imagesGrid.style.display = 'none';
+        if (this.progressSection) this.progressSection.style.display = 'none';
+        if (this.resultsSection) this.resultsSection.style.display = 'none';
+        if (this.customSizeListSection) this.customSizeListSection.style.display = 'none';
         if (this.fileInput) {
             this.fileInput.value = '';
         }
         this.updateCustomSizesListUI();
         this.updateBulkActionsUI();
+        this.updateQuickActions();
     }
 
     addToHistory() {
@@ -2422,6 +2470,7 @@ class ImageConverter {
             this.quickActions.style.display = this.images.length > 0 ? 'block' : 'none';
         }
     }
+    
 
     // Crop functionality
     openCropModal() {
@@ -2433,40 +2482,108 @@ class ImageConverter {
         this.currentEditingImageIndex = 0;
         const modal = document.getElementById('cropModal');
         const canvas = document.getElementById('cropCanvas');
-        const img = new Image();
-        img.onload = () => {
+        const cropX = document.getElementById('cropX');
+        const cropY = document.getElementById('cropY');
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        
+        if (!modal || !canvas || !cropX || !cropY || !cropWidth || !cropHeight) {
+            console.error('Crop modal elements not found');
+            return;
+        }
+        
+        // Use the image element directly if available, otherwise create from file
+        const img = image.image || new Image();
+        
+        if (image.image && image.image.complete) {
+            // Image is already loaded
             const maxWidth = 700;
-            const scale = Math.min(maxWidth / img.width, 1);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
+            const scale = Math.min(maxWidth / image.image.width, 1);
+            canvas.width = image.image.width * scale;
+            canvas.height = image.image.height * scale;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image.image, 0, 0, canvas.width, canvas.height);
             
             // Initialize crop values
-            document.getElementById('cropX').value = 0;
-            document.getElementById('cropY').value = 0;
-            document.getElementById('cropWidth').value = Math.floor(canvas.width);
-            document.getElementById('cropHeight').value = Math.floor(canvas.height);
+            cropX.value = 0;
+            cropY.value = 0;
+            cropWidth.value = Math.floor(canvas.width);
+            cropHeight.value = Math.floor(canvas.height);
+            
+            // Add event listeners for crop controls
+            cropX.addEventListener('input', () => this.updateCropPreview());
+            cropY.addEventListener('input', () => this.updateCropPreview());
+            cropWidth.addEventListener('input', () => this.updateCropPreview());
+            cropHeight.addEventListener('input', () => this.updateCropPreview());
             
             this.updateCropPreview();
-        };
-        img.src = image.url;
-        modal.style.display = 'flex';
+            modal.style.display = 'flex';
+        } else {
+            // Load image from file
+            if (image.file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.onload = () => {
+                        const maxWidth = 700;
+                        const scale = Math.min(maxWidth / img.width, 1);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Initialize crop values
+                        cropX.value = 0;
+                        cropY.value = 0;
+                        cropWidth.value = Math.floor(canvas.width);
+                        cropHeight.value = Math.floor(canvas.height);
+                        
+                        // Add event listeners for crop controls
+                        cropX.addEventListener('input', () => this.updateCropPreview());
+                        cropY.addEventListener('input', () => this.updateCropPreview());
+                        cropWidth.addEventListener('input', () => this.updateCropPreview());
+                        cropHeight.addEventListener('input', () => this.updateCropPreview());
+                        
+                        this.updateCropPreview();
+                    };
+                    img.onerror = () => {
+                        alert('Failed to load image for cropping');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => {
+                    alert('Failed to read image file');
+                };
+                reader.readAsDataURL(image.file);
+            } else {
+                alert('Image data not available');
+                return;
+            }
+            modal.style.display = 'flex';
+        }
     }
 
     updateCropPreview() {
         const canvas = document.getElementById('cropCanvas');
+        if (!canvas || this.currentEditingImageIndex === null || !this.images[this.currentEditingImageIndex]) return;
+        
         const ctx = canvas.getContext('2d');
-        const x = parseInt(document.getElementById('cropX').value) || 0;
-        const y = parseInt(document.getElementById('cropY').value) || 0;
-        const w = parseInt(document.getElementById('cropWidth').value) || 100;
-        const h = parseInt(document.getElementById('cropHeight').value) || 100;
+        const cropX = document.getElementById('cropX');
+        const cropY = document.getElementById('cropY');
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        
+        if (!cropX || !cropY || !cropWidth || !cropHeight) return;
+        
+        const x = parseInt(cropX.value) || 0;
+        const y = parseInt(cropY.value) || 0;
+        const w = parseInt(cropWidth.value) || 100;
+        const h = parseInt(cropHeight.value) || 100;
         
         // Redraw image
-        const img = new Image();
-        img.onload = () => {
+        const image = this.images[this.currentEditingImageIndex];
+        const drawPreview = (imgElement) => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
             
             // Draw crop overlay
             ctx.strokeStyle = '#6366f1';
@@ -2474,21 +2591,50 @@ class ImageConverter {
             ctx.setLineDash([5, 5]);
             ctx.strokeRect(x, y, w, h);
             ctx.setLineDash([]);
+            
+            // Draw corner handles
+            const handleSize = 8;
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            ctx.fillRect(x + w - handleSize/2, y - handleSize/2, handleSize, handleSize);
+            ctx.fillRect(x - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
+            ctx.fillRect(x + w - handleSize/2, y + h - handleSize/2, handleSize, handleSize);
         };
-        img.src = this.images[this.currentEditingImageIndex].url;
+        
+        if (image.image && image.image.complete) {
+            drawPreview(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => drawPreview(img);
+                img.onerror = () => console.error('Failed to load image for crop preview');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        }
     }
 
     applyCrop() {
         if (this.currentEditingImageIndex === null) return;
         const image = this.images[this.currentEditingImageIndex];
-        const x = parseInt(document.getElementById('cropX').value) || 0;
-        const y = parseInt(document.getElementById('cropY').value) || 0;
-        const w = parseInt(document.getElementById('cropWidth').value) || 100;
-        const h = parseInt(document.getElementById('cropHeight').value) || 100;
+        if (!image) return;
         
-        const img = new Image();
-        img.onload = () => {
-            const scale = img.width / document.getElementById('cropCanvas').width;
+        const cropCanvas = document.getElementById('cropCanvas');
+        const cropX = document.getElementById('cropX');
+        const cropY = document.getElementById('cropY');
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        
+        if (!cropCanvas || !cropX || !cropY || !cropWidth || !cropHeight) return;
+        
+        const x = parseInt(cropX.value) || 0;
+        const y = parseInt(cropY.value) || 0;
+        const w = parseInt(cropWidth.value) || 100;
+        const h = parseInt(cropHeight.value) || 100;
+        
+        const processCrop = (imgElement) => {
+            const scale = imgElement.width / cropCanvas.width;
             const actualX = x * scale;
             const actualY = y * scale;
             const actualW = w * scale;
@@ -2498,25 +2644,62 @@ class ImageConverter {
             canvas.width = actualW;
             canvas.height = actualH;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, actualX, actualY, actualW, actualH, 0, 0, actualW, actualH);
+            ctx.drawImage(imgElement, actualX, actualY, actualW, actualH, 0, 0, actualW, actualH);
             
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                image.url = url;
+                if (!blob) {
+                    alert('Failed to crop image. Please try again.');
+                    return;
+                }
+                // Update image data
                 image.file = blob;
-                this.updateImageGrid();
-                this.closeModal('cropModal');
+                // Create new image element from blob
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const newImg = new Image();
+                    newImg.onload = () => {
+                        image.image = newImg;
+                        image.width = newImg.width;
+                        image.height = newImg.height;
+                        image.originalSize = blob.size;
+                        this.updateImageGrid();
+                        this.closeModal('cropModal');
+                    };
+                    newImg.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
             }, 'image/png');
         };
-        img.src = image.url;
+        
+        if (image.image && image.image.complete) {
+            processCrop(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => processCrop(img);
+                img.onerror = () => alert('Failed to load image for cropping');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            alert('Image data not available');
+        }
     }
 
     resetCrop() {
         const canvas = document.getElementById('cropCanvas');
-        document.getElementById('cropX').value = 0;
-        document.getElementById('cropY').value = 0;
-        document.getElementById('cropWidth').value = Math.floor(canvas.width);
-        document.getElementById('cropHeight').value = Math.floor(canvas.height);
+        const cropX = document.getElementById('cropX');
+        const cropY = document.getElementById('cropY');
+        const cropWidth = document.getElementById('cropWidth');
+        const cropHeight = document.getElementById('cropHeight');
+        
+        if (!canvas || !cropX || !cropY || !cropWidth || !cropHeight) return;
+        
+        cropX.value = 0;
+        cropY.value = 0;
+        cropWidth.value = Math.floor(canvas.width);
+        cropHeight.value = Math.floor(canvas.height);
         this.updateCropPreview();
     }
 
@@ -2527,31 +2710,62 @@ class ImageConverter {
             return;
         }
         const image = this.images[0];
-        const img = new Image();
-        img.onload = () => {
+        if (!image) return;
+        
+        const processRotation = (imgElement) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
             if (degrees === 90 || degrees === -90) {
-                canvas.width = img.height;
-                canvas.height = img.width;
+                canvas.width = imgElement.height;
+                canvas.height = imgElement.width;
             } else {
-                canvas.width = img.width;
-                canvas.height = img.height;
+                canvas.width = imgElement.width;
+                canvas.height = imgElement.height;
             }
             
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.rotate(degrees * Math.PI / 180);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            ctx.drawImage(imgElement, -imgElement.width / 2, -imgElement.height / 2);
             
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                image.url = url;
+                if (!blob) {
+                    alert('Failed to rotate image. Please try again.');
+                    return;
+                }
+                // Update image data
                 image.file = blob;
-                this.updateImageGrid();
+                // Create new image element from blob
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const newImg = new Image();
+                    newImg.onload = () => {
+                        image.image = newImg;
+                        image.width = newImg.width;
+                        image.height = newImg.height;
+                        image.originalSize = blob.size;
+                        this.updateImageGrid();
+                    };
+                    newImg.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
             }, 'image/png');
         };
-        img.src = image.url;
+        
+        if (image.image && image.image.complete) {
+            processRotation(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => processRotation(img);
+                img.onerror = () => alert('Failed to load image for rotation');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            alert('Image data not available');
+        }
     }
 
     flipImage(direction) {
@@ -2560,11 +2774,12 @@ class ImageConverter {
             return;
         }
         const image = this.images[0];
-        const img = new Image();
-        img.onload = () => {
+        if (!image) return;
+        
+        const processFlip = (imgElement) => {
             const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = imgElement.width;
+            canvas.height = imgElement.height;
             const ctx = canvas.getContext('2d');
             
             if (direction === 'horizontal') {
@@ -2575,16 +2790,46 @@ class ImageConverter {
                 ctx.scale(1, -1);
             }
             
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(imgElement, 0, 0);
             
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                image.url = url;
+                if (!blob) {
+                    alert('Failed to flip image. Please try again.');
+                    return;
+                }
+                // Update image data
                 image.file = blob;
-                this.updateImageGrid();
+                // Create new image element from blob
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const newImg = new Image();
+                    newImg.onload = () => {
+                        image.image = newImg;
+                        image.width = newImg.width;
+                        image.height = newImg.height;
+                        image.originalSize = blob.size;
+                        this.updateImageGrid();
+                    };
+                    newImg.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
             }, 'image/png');
         };
-        img.src = image.url;
+        
+        if (image.image && image.image.complete) {
+            processFlip(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => processFlip(img);
+                img.onerror = () => alert('Failed to load image for flipping');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            alert('Image data not available');
+        }
     }
 
     // Optimize compression
@@ -2594,53 +2839,261 @@ class ImageConverter {
             return;
         }
         const image = this.images[0];
+        if (!image) return;
+        
         this.currentEditingImageIndex = 0;
         const modal = document.getElementById('optimizeModal');
         const beforePreview = document.getElementById('optimizeBeforePreview');
         const beforeSize = document.getElementById('optimizeBeforeSize');
         
-        const img = document.createElement('img');
-        img.src = image.url;
-        img.style.maxWidth = '100%';
-        img.style.maxHeight = '200px';
-        beforePreview.innerHTML = '';
-        beforePreview.appendChild(img);
+        if (!modal || !beforePreview || !beforeSize) {
+            console.error('Optimize modal elements not found');
+            return;
+        }
+        
+        // Clear previous content
+        beforePreview.innerHTML = '<p style="color: var(--text-secondary);">Loading...</p>';
+        
+        // Load image using Image object to handle blob URLs properly
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+            // Create a canvas to display the image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxWidth = 400;
+            const maxHeight = 300;
+            let width = img.width;
+            let height = img.height;
+            
+            // Scale down if too large
+            if (width > maxWidth || height > maxHeight) {
+                const scale = Math.min(maxWidth / width, maxHeight / height);
+                width = width * scale;
+                height = height * scale;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Display the canvas
+            beforePreview.innerHTML = '';
+            beforePreview.appendChild(canvas);
+        };
+        
+        img.onerror = () => {
+            // Try to load as blob URL or data URL
+            if (image.file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img2 = new Image();
+                    img2.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxWidth = 400;
+                        const maxHeight = 300;
+                        let width = img2.width;
+                        let height = img2.height;
+                        
+                        if (width > maxWidth || height > maxHeight) {
+                            const scale = Math.min(maxWidth / width, maxHeight / height);
+                            width = width * scale;
+                            height = height * scale;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img2, 0, 0, width, height);
+                        beforePreview.innerHTML = '';
+                        beforePreview.appendChild(canvas);
+                    };
+                    img2.onerror = () => {
+                        beforePreview.innerHTML = '<p style="color: var(--danger);">Failed to load image</p>';
+                    };
+                    img2.src = e.target.result;
+                };
+                reader.onerror = () => {
+                    beforePreview.innerHTML = '<p style="color: var(--danger);">Failed to read image file</p>';
+                };
+                reader.readAsDataURL(image.file);
+            } else {
+                beforePreview.innerHTML = '<p style="color: var(--danger);">Failed to load image</p>';
+            }
+        };
+        
+        // Load image from image element or file
+        if (image.image && image.image.complete) {
+            // Create data URL from image element
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = image.image.width;
+            tempCanvas.height = image.image.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(image.image, 0, 0);
+            img.src = tempCanvas.toDataURL();
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            beforePreview.innerHTML = '<p style="color: var(--danger);">Image data not available</p>';
+        }
         
         if (image.file) {
             beforeSize.textContent = `Size: ${this.formatFileSize(image.file.size)}`;
+        } else {
+            beforeSize.textContent = 'Size: Unknown';
         }
         
-        this.updateOptimizePreview();
+        // Wait a bit for image to load, then update preview
+        setTimeout(() => {
+            this.updateOptimizePreview();
+        }, 100);
+        
         modal.style.display = 'flex';
     }
 
     updateOptimizePreview() {
         if (this.currentEditingImageIndex === null) return;
         const image = this.images[this.currentEditingImageIndex];
-        const quality = parseInt(document.getElementById('optimizeQuality').value) || 80;
+        if (!image) return;
+        
+        const optimizeQuality = document.getElementById('optimizeQuality');
         const afterPreview = document.getElementById('optimizeAfterPreview');
         const afterSize = document.getElementById('optimizeAfterSize');
         
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
+        if (!optimizeQuality || !afterPreview || !afterSize) return;
+        
+        const quality = parseInt(optimizeQuality.value) || 80;
+        
+        // Show loading state
+        afterPreview.innerHTML = '<p style="color: var(--text-secondary);">Generating preview...</p>';
+        
+        // Function to process image
+        const processImage = (imageSrc) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
             
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const previewImg = document.createElement('img');
-                previewImg.src = url;
-                previewImg.style.maxWidth = '100%';
-                previewImg.style.maxHeight = '200px';
-                afterPreview.innerHTML = '';
-                afterPreview.appendChild(previewImg);
-                afterSize.textContent = `Size: ${this.formatFileSize(blob.size)} (${Math.round((1 - blob.size / (image.file?.size || blob.size)) * 100)}% smaller)`;
-            }, 'image/jpeg', quality / 100);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to generate preview</p>';
+                        return;
+                    }
+                    
+                    // Create preview canvas
+                    const previewCanvas = document.createElement('canvas');
+                    const previewCtx = previewCanvas.getContext('2d');
+                    const maxWidth = 400;
+                    const maxHeight = 300;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        const scale = Math.min(maxWidth / width, maxHeight / height);
+                        width = width * scale;
+                        height = height * scale;
+                    }
+                    
+                    previewCanvas.width = width;
+                    previewCanvas.height = height;
+                    previewCtx.drawImage(img, 0, 0, width, height);
+                    
+                    afterPreview.innerHTML = '';
+                    afterPreview.appendChild(previewCanvas);
+                    
+                    const originalSize = image.file?.size || blob.size;
+                    const saved = originalSize > blob.size ? Math.round((1 - blob.size / originalSize) * 100) : 0;
+                    afterSize.textContent = `Size: ${this.formatFileSize(blob.size)}${saved > 0 ? ` (${saved}% smaller)` : ''}`;
+                }, 'image/jpeg', quality / 100);
+            };
+            
+            img.onerror = () => {
+                // Try loading from file if URL fails
+                if (image.file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img2 = new Image();
+                        img2.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img2.width;
+                            canvas.height = img2.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img2, 0, 0);
+                            
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to generate preview</p>';
+                                    return;
+                                }
+                                
+                                const previewCanvas = document.createElement('canvas');
+                                const previewCtx = previewCanvas.getContext('2d');
+                                const maxWidth = 400;
+                                const maxHeight = 300;
+                                let width = img2.width;
+                                let height = img2.height;
+                                
+                                if (width > maxWidth || height > maxHeight) {
+                                    const scale = Math.min(maxWidth / width, maxHeight / height);
+                                    width = width * scale;
+                                    height = height * scale;
+                                }
+                                
+                                previewCanvas.width = width;
+                                previewCanvas.height = height;
+                                previewCtx.drawImage(img2, 0, 0, width, height);
+                                
+                                afterPreview.innerHTML = '';
+                                afterPreview.appendChild(previewCanvas);
+                                
+                                const originalSize = image.file?.size || blob.size;
+                                const saved = originalSize > blob.size ? Math.round((1 - blob.size / originalSize) * 100) : 0;
+                                afterSize.textContent = `Size: ${this.formatFileSize(blob.size)}${saved > 0 ? ` (${saved}% smaller)` : ''}`;
+                            }, 'image/jpeg', quality / 100);
+                        };
+                        img2.onerror = () => {
+                            afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to load image</p>';
+                        };
+                        img2.src = e.target.result;
+                    };
+                    reader.onerror = () => {
+                        afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to read image file</p>';
+                    };
+                    reader.readAsDataURL(image.file);
+                } else {
+                    afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to load image</p>';
+                }
+            };
+            
+            img.src = imageSrc;
         };
-        img.src = image.url;
+        
+        // Try to load from URL first
+        if (image.url) {
+            processImage(image.url);
+        } else if (image.file) {
+            // If no URL, read from file
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                processImage(e.target.result);
+            };
+            reader.onerror = () => {
+                afterPreview.innerHTML = '<p style="color: var(--danger);">Failed to read image file</p>';
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            afterPreview.innerHTML = '<p style="color: var(--danger);">No image data available</p>';
+        }
     }
 
     applyOptimization() {
@@ -2675,6 +3128,10 @@ class ImageConverter {
         }
         this.currentEditingImageIndex = 0;
         const modal = document.getElementById('watermarkModal');
+        if (!modal) {
+            console.error('Watermark modal not found');
+            return;
+        }
         this.updateWatermarkPreview();
         modal.style.display = 'flex';
     }
@@ -2682,25 +3139,36 @@ class ImageConverter {
     updateWatermarkPreview() {
         if (this.currentEditingImageIndex === null) return;
         const image = this.images[this.currentEditingImageIndex];
-        const canvas = document.getElementById('watermarkPreview');
-        const ctx = canvas.getContext('2d');
+        if (!image) return;
         
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+        const canvas = document.getElementById('watermarkPreview');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const watermarkType = document.getElementById('watermarkType');
+        const watermarkPosition = document.getElementById('watermarkPosition');
+        const watermarkOpacity = document.getElementById('watermarkOpacity');
+        const watermarkText = document.getElementById('watermarkText');
+        const watermarkFontSize = document.getElementById('watermarkFontSize');
+        const watermarkColor = document.getElementById('watermarkColor');
+        
+        if (!watermarkType || !watermarkPosition || !watermarkOpacity) return;
+        
+        const drawWatermark = (imgElement) => {
+            canvas.width = imgElement.width;
+            canvas.height = imgElement.height;
+            ctx.drawImage(imgElement, 0, 0);
             
-            const type = document.getElementById('watermarkType').value;
-            const position = document.getElementById('watermarkPosition').value;
-            const opacity = parseInt(document.getElementById('watermarkOpacity').value) / 100;
+            const type = watermarkType.value;
+            const position = watermarkPosition.value;
+            const opacity = parseInt(watermarkOpacity.value) / 100;
             
             ctx.globalAlpha = opacity;
             
-            if (type === 'text') {
-                const text = document.getElementById('watermarkText').value || '© 2024';
-                const fontSize = parseInt(document.getElementById('watermarkFontSize').value) || 24;
-                const color = document.getElementById('watermarkColor').value || '#ffffff';
+            if (type === 'text' && watermarkText && watermarkFontSize && watermarkColor) {
+                const text = watermarkText.value || '© 2024';
+                const fontSize = parseInt(watermarkFontSize.value) || 24;
+                const color = watermarkColor.value || '#ffffff';
                 
                 ctx.font = `bold ${fontSize}px Arial`;
                 ctx.fillStyle = color;
@@ -2724,31 +3192,53 @@ class ImageConverter {
             
             ctx.globalAlpha = 1.0;
         };
-        img.src = image.url;
+        
+        if (image.image && image.image.complete) {
+            drawWatermark(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => drawWatermark(img);
+                img.onerror = () => console.error('Failed to load image for watermark preview');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        }
     }
 
     applyWatermark() {
         if (this.currentEditingImageIndex === null) return;
         const image = this.images[this.currentEditingImageIndex];
+        if (!image) return;
+        
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+        const watermarkType = document.getElementById('watermarkType');
+        const watermarkPosition = document.getElementById('watermarkPosition');
+        const watermarkOpacity = document.getElementById('watermarkOpacity');
+        const watermarkText = document.getElementById('watermarkText');
+        const watermarkFontSize = document.getElementById('watermarkFontSize');
+        const watermarkColor = document.getElementById('watermarkColor');
+        
+        if (!watermarkType || !watermarkPosition || !watermarkOpacity) return;
+        
+        const processWatermark = (imgElement) => {
+            canvas.width = imgElement.width;
+            canvas.height = imgElement.height;
+            ctx.drawImage(imgElement, 0, 0);
             
-            const type = document.getElementById('watermarkType').value;
-            const position = document.getElementById('watermarkPosition').value;
-            const opacity = parseInt(document.getElementById('watermarkOpacity').value) / 100;
+            const type = watermarkType.value;
+            const position = watermarkPosition.value;
+            const opacity = parseInt(watermarkOpacity.value) / 100;
             
             ctx.globalAlpha = opacity;
             
-            if (type === 'text') {
-                const text = document.getElementById('watermarkText').value || '© 2024';
-                const fontSize = parseInt(document.getElementById('watermarkFontSize').value) || 24;
-                const color = document.getElementById('watermarkColor').value || '#ffffff';
+            if (type === 'text' && watermarkText && watermarkFontSize && watermarkColor) {
+                const text = watermarkText.value || '© 2024';
+                const fontSize = parseInt(watermarkFontSize.value) || 24;
+                const color = watermarkColor.value || '#ffffff';
                 
                 ctx.font = `bold ${fontSize}px Arial`;
                 ctx.fillStyle = color;
@@ -2773,14 +3263,44 @@ class ImageConverter {
             ctx.globalAlpha = 1.0;
             
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                image.url = url;
+                if (!blob) {
+                    alert('Failed to apply watermark. Please try again.');
+                    return;
+                }
+                // Update image data
                 image.file = blob;
-                this.updateImageGrid();
-                this.closeModal('watermarkModal');
+                // Create new image element from blob
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const newImg = new Image();
+                    newImg.onload = () => {
+                        image.image = newImg;
+                        image.width = newImg.width;
+                        image.height = newImg.height;
+                        image.originalSize = blob.size;
+                        this.updateImageGrid();
+                        this.closeModal('watermarkModal');
+                    };
+                    newImg.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
             }, 'image/png');
         };
-        img.src = image.url;
+        
+        if (image.image && image.image.complete) {
+            processWatermark(image.image);
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => processWatermark(img);
+                img.onerror = () => alert('Failed to load image for watermarking');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            alert('Image data not available');
+        }
     }
 
     // Metadata viewer
@@ -2803,16 +3323,35 @@ class ImageConverter {
             dimensions: 'Loading...'
         };
         
-        const img = new Image();
-        img.onload = () => {
-            metadata.dimensions = `${img.width} × ${img.height} pixels`;
+        // Load image dimensions from image element or file
+        if (image.image && image.image.complete) {
+            metadata.dimensions = `${image.image.width} × ${image.image.height} pixels`;
             this.displayMetadata(metadata);
-        };
-        img.src = image.url;
+        } else if (image.file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    metadata.dimensions = `${img.width} × ${img.height} pixels`;
+                    this.displayMetadata(metadata);
+                };
+                img.onerror = () => {
+                    metadata.dimensions = 'Unable to load';
+                    this.displayMetadata(metadata);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(image.file);
+        } else {
+            metadata.dimensions = 'Unknown';
+            this.displayMetadata(metadata);
+        }
     }
 
     displayMetadata(metadata) {
         const content = document.getElementById('metadataContent');
+        if (!content) return;
+        
         content.innerHTML = `
             <div style="display: grid; gap: 10px;">
                 <div><strong>File Name:</strong> ${metadata.name}</div>
@@ -2826,6 +3365,8 @@ class ImageConverter {
     exportMetadata() {
         if (this.images.length === 0) return;
         const image = this.images[0];
+        if (!image) return;
+        
         const metadata = {
             name: image.name,
             size: image.file?.size,
@@ -2835,11 +3376,21 @@ class ImageConverter {
         
         const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${image.name}_metadata.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        
+        if (this.isChromeExtension && chrome.downloads) {
+            chrome.downloads.download({
+                url: url,
+                filename: `${image.name || 'image'}_metadata.json`,
+                saveAs: true
+            });
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } else {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${image.name || 'image'}_metadata.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     }
 
     // Batch rename
@@ -2849,15 +3400,25 @@ class ImageConverter {
             return;
         }
         const modal = document.getElementById('renameModal');
+        if (!modal) {
+            console.error('Rename modal not found');
+            return;
+        }
         this.updateRenamePreview();
         modal.style.display = 'flex';
     }
 
     updateRenamePreview() {
         const previewList = document.getElementById('renamePreviewList');
-        const pattern = document.getElementById('renamePattern').value;
-        const custom = document.getElementById('renameCustom').value || 'image_{#}';
-        const startNumber = parseInt(document.getElementById('renameStartNumber').value) || 1;
+        const renamePattern = document.getElementById('renamePattern');
+        const renameCustom = document.getElementById('renameCustom');
+        const renameStartNumber = document.getElementById('renameStartNumber');
+        
+        if (!previewList || !renamePattern || !renameStartNumber) return;
+        
+        const pattern = renamePattern.value;
+        const custom = (renameCustom && renameCustom.value) ? renameCustom.value : 'image_{#}';
+        const startNumber = parseInt(renameStartNumber.value) || 1;
         
         previewList.innerHTML = '';
         
@@ -2898,9 +3459,15 @@ class ImageConverter {
     }
 
     applyRename() {
-        const pattern = document.getElementById('renamePattern').value;
-        const custom = document.getElementById('renameCustom').value || 'image_{#}';
-        const startNumber = parseInt(document.getElementById('renameStartNumber').value) || 1;
+        const renamePattern = document.getElementById('renamePattern');
+        const renameCustom = document.getElementById('renameCustom');
+        const renameStartNumber = document.getElementById('renameStartNumber');
+        
+        if (!renamePattern || !renameStartNumber) return;
+        
+        const pattern = renamePattern.value;
+        const custom = (renameCustom && renameCustom.value) ? renameCustom.value : 'image_{#}';
+        const startNumber = parseInt(renameStartNumber.value) || 1;
         
         this.images.forEach((image, index) => {
             const originalName = image.name || `image_${index + 1}`;
